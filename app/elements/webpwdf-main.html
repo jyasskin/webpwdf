@@ -1,0 +1,77 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="dropbox-datastore.html">
+<link rel="import" href="pwdf-scrypt.html">
+
+<polymer-element name="webpwdf-main">
+  <template>
+    <style>
+      :host { display: block; }
+
+      .indent { margin-left: 1em; }
+      .invalid { color: red; font-size: smaller; }
+      .options { display: inline-block; background-color: #eee; }
+    </style>
+    <dropbox-datastore id="datastore" key="gjfzuk5wqgsuwac"></dropbox-datastore>
+    <h1>Web Password Derivation Function</h1>
+    <p>Url you want to log into: <input value="{{url}}"></p>
+    <p>Site nickname: <input value="{{nickname}}"> <small><a href="#" on-click="{{toggleOptions}}">Options</a></small></p>
+    <template if="{{showOptions}}">
+      <div class="indent">
+        <div class="options">
+          <h2>Options</h2>
+          <p>N: <input value="{{N}}"></p>
+          <p>r: <input value="{{r}}"></p>
+          <p>parallelism: <input value="{{p}}"></p>
+          <p>Password Length: <input value="{{pwLen}}"></p>
+        </div>
+      </div>
+    </template>
+    <p>Master password: <input value="{{password}}" type="password"></p>
+    <p><input type="checkbox" checked="{{retypePassword}}"> Retype master password?</p>
+    <template if="{{retypePassword}}">
+      <p class="indent">Master password again: <input value="{{password2}}" type="password">
+        <template if="{{!passwordValid}}">
+          <span class="invalid">Passwords don't match!</p>
+        </template>
+      </p>
+    </template>
+    <p><button on-click="{{derivePassword}}" disabled?="{{!passwordValid}}">Compute site password</button></p>
+    <pwdf-scrypt id="scrypt" password="{{password}}" salt="{{nickname}}"
+                 N="{{N}}" r="{{r}}" p="{{p}}" outLen="{{(pwLen + 3) / 4 * 3}}"
+                 base64Output="{{rawSitePassword}}"></pwdf-scrypt>
+    <p>Unique site password: <input value="{{computedPassword}}"></p>
+  </template>
+  <script>
+    Polymer('webpwdf-main', {
+      observe: {
+        'password': 'validatePassword',
+        'password2': 'validatePassword',
+        'retypePassword': 'validatePassword',
+      },
+      retypePassword: false,
+      N: 16384,
+      r: 8,
+      p: 1,
+      pwLen: 16,
+      toggleOptions: function(e) {
+        this.showOptions = !this.showOptions;
+        e.preventDefault();
+      },
+      validatePassword: function() {
+        this.passwordValid = !this.retypePassword || this.password == this.password2;
+      },
+      derivePassword: function() {
+        this.$.scrypt.compute();
+      },
+      rawSitePasswordChanged: function() {
+        this.computedPassword = this.rawSitePassword.slice(0, this.pwLen);
+      },
+      computedPasswordChanged: function() {
+        // Make it easy to clear out all the passwords.
+        if (this.computedPassword === '') {
+          this.password = this.password2 = '';
+        }
+      },
+    });
+  </script>
+</polymer-element>

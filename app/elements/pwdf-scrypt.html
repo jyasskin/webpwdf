@@ -1,0 +1,35 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<script src="../scripts/vendor/crypto-js/core.js"></script>
+<script src="../scripts/vendor/crypto-js/lib-typedarrays.js"></script>
+<script src="../scripts/vendor/crypto-js/sha256.js"></script>
+<script src="../scripts/vendor/crypto-js/hmac.js"></script>
+<script src="../scripts/vendor/crypto-js/pbkdf2.js"></script>
+<script src="../scripts/vendor/crypto-js/scrypt.js"></script>
+<script src="../scripts/vendor/crypto-js/enc-base64.js"></script>
+
+<!-- Returns 'outLen' bytes, encoded in base64. -->
+<polymer-element name="pwdf-scrypt" attributes="salt password N r p outLen base64Output">
+  <template>
+    <style>
+      :host { display: none; }
+    </style>
+  </template>
+  <script>
+    Polymer('pwdf-scrypt', {
+      N: 16384,
+      r: 8,
+      p: 1,
+      outLen: 64,
+      base64Output: '',
+      compute: function() {
+        this.base64Output = CryptoJS.enc.Base64.stringify(
+          CryptoJS.scrypt(this.password, this.salt, {
+            N: this.N,
+            r: this.r,
+            p: this.p,
+            outLen: this.outLen,
+          }));
+      },
+    });
+  </script>
+</polymer-element>
