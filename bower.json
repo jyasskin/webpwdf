@@ -2,8 +2,7 @@
   "name": "webpwdf",
   "version": "0.0.1",
   "dependencies": {
-    "platform": "Polymer/platform#master",
-    "polymer": "Polymer/polymer#master"
+    "polymer": "Polymer/polymer#~0.2.2"
   },
   "devDependencies": {}
 }

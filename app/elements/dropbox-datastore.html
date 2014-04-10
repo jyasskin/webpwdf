@@ -1,26 +1,57 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
 <script src="https://www.dropbox.com/static/api/dropbox-datastores-1.0-latest.js" type="text/javascript"></script>
 
-<polymer-element name="dropbox-datastore" attributes="key">
+<polymer-element name="dropbox-datastore" attributes="key tables">
   <template>
     <style>
-      /* styles for the custom element itself - lowest specificity */
       :host { display: none; }
     </style>
-    <span>I'm <b>polymer-dropboxDatastore</b>. This is my Shadow DOM.</span>
   </template>
   <script>
     Polymer('dropbox-datastore', {
+      authenticated: false,
+      client: null,
+      T: {},
+
       keyChanged: function() {
         this.client = new Dropbox.Client({key: this.key});
 
         // Try to finish OAuth authorization.
-        this.client.authenticate({interactive: false}, function (error) {
-          if (error) {
-            console.error('Authentication error: ', error);
-          }
-        });
+        this.authenticate({interactive: false});
       },
+
+      authenticate: function(options) {
+        if (!options) {
+          options = {interactive: true};
+        }
+        this.client.authenticate(options, function(error) {
+          if (error) {
+            console.error('Authentication error: ' + error);
+          }
+          this.authenticated = this.client.isAuthenticated();
+        }.bind(this));
+      },
+      authenticatedChanged: function() {
+        if (!this.authenticated) {
+          this._datastore = null;
+          return;
+        }
+
+        var datastoreManager = this.client.getDatastoreManager();
+        datastoreManager.openDefaultDatastore(function (error, datastore) {
+            if (error) {
+                console.error('Error opening default datastore: ' + error);
+            }
+            this._datastore = datastore;
+            this.loadTables();
+        }.bind(this));
+      },
+      loadTables: function () {
+        var tablenames = this.tables.split(/\s+/);
+        tablenames.forEach(function(tablename) {
+          this.T[tablename] = this._datastore.getTable(tablename);
+        }, this);
+      }
     });
   </script>
 </polymer-element>
