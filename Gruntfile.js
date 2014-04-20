@@ -33,7 +33,7 @@ module.exports = function (grunt) {
                 nospawn: true,
                 livereload: true
             },
-        
+
             livereload: {
                 options: {
                     livereload: LIVERELOAD_PORT
@@ -59,7 +59,7 @@ module.exports = function (grunt) {
                         return [
                             lrSnippet,
                             mountFolder(connect, '.tmp'),
-                            mountFolder(connect, paths.site)
+                            mountFolder(connect, paths.dist.site)
                         ];
                     }
                 }
@@ -79,7 +79,7 @@ module.exports = function (grunt) {
                 options: {
                     middleware: function (connect) {
                         return [
-                            mountFolder(connect, yeomanConfig.dist)
+                            mountFolder(connect, paths.dist.site)
                         ];
                     }
                 }
@@ -91,7 +91,7 @@ module.exports = function (grunt) {
             }
         },
         clean: {
-            dist: ['.tmp', '<%= paths.dist.site %>/*'],
+            dist: ['.tmp', 'dist'],
             server: '.tmp'
         },
         jshint: {
@@ -113,7 +113,7 @@ module.exports = function (grunt) {
                 }
             }
         },
-    
+
         useminPrepare: {
             html: '<%= paths.site %>/index.html',
             options: {
@@ -131,9 +131,9 @@ module.exports = function (grunt) {
             dist: {
                 files: [{
                     expand: true,
-                    cwd: '<%= paths.site %>/images',
+                    cwd: '<%= paths.chrome_extension %>/images',
                     src: '{,*/}*.{png,jpg,jpeg}',
-                    dest: '<%= paths.dist.site %>/images'
+                    dest: '<%= paths.dist.chrome_extension %>/images'
                 }]
             }
         },
@@ -169,25 +169,91 @@ module.exports = function (grunt) {
             }
         },
         vulcanize: {
-           default: {
+          combine: {
                     options: {
-                        csp: true,
+                        inline: true,
                     },
                     files: {
                         '<%= paths.dist.site %>/index.html': ['<%= paths.site %>/index.html'],
                     }
+            },
+          csp: {
+                    options: {
+                        csp: true,
+                    },
+                    files: {
+                        '<%= paths.dist.site %>/index.html': ['<%= paths.dist.site %>/index.html'],
+                    }
             }
         },
+        uglify: {
+          index_js: {
+            beautify: true,
+            src: '<%= paths.dist.site %>/index.js',
+          }
+        },
+        concat: {
+          chrome_extension: {
+            nonull: true,
+            files: {
+              '<%= paths.dist.chrome_extension %>/index.js': [
+                '<%= paths.dist.site %>/index.js',
+                '<%= paths.chrome_extension %>/popup-tab-interaction.js',
+              ],
+            },
+          },
+          vulcanizer_bug_29_workaround: {
+            nonull: true,
+            files: {
+              '<%= paths.dist.site %>/index.html': [
+                '<%= paths.dist.site %>/index.html',
+                '<%= paths.site %>/script-include.html',
+              ],
+            },
+          },
+        },
         copy: {
-            dist: {
+            static: {
                 files: [{
+                    nonull: true,
                     expand: true,
-                    dot: true,
+                    cwd: '<%= paths.site %>',
+                    dest: '<%= paths.dist.site %>',
+                    src: [
+                        'bower_components/platform/platform.js',
+                        'bower_components/polymer/polymer.js',
+                        'scripts/*',
+                    ]
+                }, {
+                    nonull: true,
+                    expand: true,
+                    cwd: '<%= paths.site %>',
+                    dest: '<%= paths.dist.chrome_extension %>',
+                    src: [
+                        'bower_components/platform/platform.js',
+                        'bower_components/polymer/polymer.js',
+                        'scripts/*',
+                    ]
+                }, {
+                    nonull: true,
+                    expand: true,
                     cwd: '<%= paths.chrome_extension %>',
                     dest: '<%= paths.dist.chrome_extension %>',
                     src: [
                         'manifest.json',
                         'event.js',
+                        'icons/*',
+                    ]
+                }],
+            },
+            dist: {
+                files: [{
+                    nonull: true,
+                    expand: true,
+                    cwd: '<%= paths.dist.site %>',
+                    dest: '<%= paths.dist.chrome_extension %>',
+                    src: [
+                        'index.html',
                     ]
                 }]
             }
@@ -201,7 +267,7 @@ module.exports = function (grunt) {
 
         grunt.task.run([
             'clean:server',
-            
+
             'connect:livereload',
             'copy',
             'open',
@@ -211,23 +277,25 @@ module.exports = function (grunt) {
 
     grunt.registerTask('test', [
         'clean:server',
-        
-        
+
+
         'connect:test',
         'mocha'
     ]);
 
     grunt.registerTask('build', [
         'clean:dist',
-        'vulcanize',
-        'useminPrepare',
+        'copy:static',
+        'vulcanize:combine',
+        'vulcanize:csp',
+        'uglify',
+        //'useminPrepare',
         'imagemin',
-        'htmlmin',
-        // 'concat',
-        'cssmin',
-        // 'uglify',
-        // 'copy',
-        'usemin'
+        //'htmlmin',
+        'concat',
+        //'cssmin',
+        'copy:dist',
+        //'usemin'
     ]);
 
     grunt.registerTask('default', [
