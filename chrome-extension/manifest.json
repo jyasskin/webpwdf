@@ -1,0 +1,34 @@
+{
+    "name": "Web Password Derivation Function",
+    "description": "Uses a site nickname, a master password, and a key derivation function to generate a hard-to-reverse password for the site.",
+    "version": "0.1",
+    "manifest_version": 2,
+    "icons": {
+      "48": "icons/icon48.png",
+      "96": "icons/icon96.png",
+      "128": "icons/icon128.png",
+      "256": "icons/icon256.png"
+    },
+    "background": {
+        "scripts": ["event.js"],
+        "persistent": false
+    },
+    "permissions": [
+        "activeTab",
+        "clipboardWrite",
+        "declarativeContent",
+        "identity",
+        "storage"
+    ],
+    "page_action": {
+        "default_icon": {
+          "19": "icons/icon19.png",
+          "38": "icons/icon38.png"
+          },
+        "default_popup": "index.html"
+    },
+    "content_security_policy": "script-src 'self' https://www.dropbox.com/static/api/dropbox-datastores-1.0-latest.js; object-src 'self'",
+    "web_accessible_resources": [
+      "chrome_oauth_receiver.html"
+    ]
+}

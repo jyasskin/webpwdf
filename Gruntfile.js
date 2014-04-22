@@ -33,7 +33,7 @@ module.exports = function (grunt) {
                 nospawn: true,
                 livereload: true
             },
-        
+
             livereload: {
                 options: {
                     livereload: LIVERELOAD_PORT
@@ -59,7 +59,7 @@ module.exports = function (grunt) {
                         return [
                             lrSnippet,
                             mountFolder(connect, '.tmp'),
-                            mountFolder(connect, paths.site)
+                            mountFolder(connect, paths.dist.site)
                         ];
                     }
                 }
@@ -79,7 +79,7 @@ module.exports = function (grunt) {
                 options: {
                     middleware: function (connect) {
                         return [
-                            mountFolder(connect, yeomanConfig.dist)
+                            mountFolder(connect, paths.dist.site)
                         ];
                     }
                 }
@@ -91,7 +91,7 @@ module.exports = function (grunt) {
             }
         },
         clean: {
-            dist: ['.tmp', '<%= paths.dist.site %>/*'],
+            dist: ['.tmp', 'dist'],
             server: '.tmp'
         },
         jshint: {
@@ -113,84 +113,51 @@ module.exports = function (grunt) {
                 }
             }
         },
-    
-        useminPrepare: {
-            html: '<%= paths.site %>/index.html',
-            options: {
-                dest: '<%= paths.dist.site %>'
-            }
-        },
-        usemin: {
-            html: ['<%= paths.dist.site %>/{,*/}*.html'],
-            css: ['<%= paths.dist.site %>/styles/{,*/}*.css'],
-            options: {
-                dirs: ['<%= paths.dist.site %>']
-            }
-        },
         imagemin: {
             dist: {
                 files: [{
                     expand: true,
-                    cwd: '<%= paths.site %>/images',
+                    cwd: '<%= paths.chrome_extension %>/icons',
                     src: '{,*/}*.{png,jpg,jpeg}',
-                    dest: '<%= paths.dist.site %>/images'
+                    dest: '<%= paths.dist.chrome_extension %>/icons'
                 }]
-            }
-        },
-        cssmin: {
-            dist: {
-                files: {
-                    '<%= paths.dist.site %>/styles/main.css': [
-                        '.tmp/styles/{,*/}*.css',
-                        '<%= paths.site %>/styles/{,*/}*.css'
-                    ]
-                }
-            }
-        },
-        htmlmin: {
-            dist: {
-                options: {
-                    /*removeCommentsFromCDATA: true,
-                    // https://github.com/yeoman/grunt-usemin/issues/44
-                    //collapseWhitespace: true,
-                    collapseBooleanAttributes: true,
-                    removeAttributeQuotes: true,
-                    removeRedundantAttributes: true,
-                    useShortDoctype: true,
-                    removeEmptyAttributes: true,
-                    removeOptionalTags: true*/
-                },
-                files: [{
-                    expand: true,
-                    cwd: '<%= paths.site %>',
-                    src: '*.html',
-                    dest: '<%= paths.dist.site %>'
-                }]
-            }
-        },
-        vulcanize: {
-           default: {
-                    options: {
-                        csp: true,
-                    },
-                    files: {
-                        '<%= paths.dist.site %>/index.html': ['<%= paths.site %>/index.html'],
-                    }
             }
         },
         copy: {
-            dist: {
+            static: {
                 files: [{
+                    nonull: true,
                     expand: true,
-                    dot: true,
+                    cwd: '<%= paths.site %>',
+                    dest: '<%= paths.dist.site %>',
+                    src: [
+                        'bower_components/**',
+                        'elements/**',
+                        'index.html',
+                        'scripts/**',
+                    ]
+                }, {
+                    nonull: true,
+                    expand: true,
+                    cwd: '<%= paths.site %>',
+                    dest: '<%= paths.dist.chrome_extension %>',
+                    src: [
+                        'bower_components/**',
+                        'elements/**',
+                        'index.html',
+                        'scripts/**',
+                    ]
+                }, {
+                    nonull: true,
+                    expand: true,
                     cwd: '<%= paths.chrome_extension %>',
                     dest: '<%= paths.dist.chrome_extension %>',
                     src: [
-                        'manifest.json',
                         'event.js',
+                        'manifest.json',
                     ]
-                }]
-            }
+                }],
+            },
         },
     });
 
@@ -201,7 +168,7 @@ module.exports = function (grunt) {
 
         grunt.task.run([
             'clean:server',
-            
+
             'connect:livereload',
             'copy',
             'open',
@@ -211,23 +178,16 @@ module.exports = function (grunt) {
 
     grunt.registerTask('test', [
         'clean:server',
-        
-        
+
+
         'connect:test',
         'mocha'
     ]);
 
     grunt.registerTask('build', [
         'clean:dist',
-        'vulcanize',
-        'useminPrepare',
+        'copy',
         'imagemin',
-        'htmlmin',
-        // 'concat',
-        'cssmin',
-        // 'uglify',
-        // 'copy',
-        'usemin'
     ]);
 
     grunt.registerTask('default', [
